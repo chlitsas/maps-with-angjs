@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html ng-app='App'>
+   <head>
+      <style type='text/css'>
+         body, html { height: 100%; margin: 0;}
+         .google-map { height: 100%; }
+      </style>
+      <script src='https://maps.googleapis.com/maps/api/js'></script>
+      <script src='https://ajax.googleapis.com/ajax/libs/angularjs/1.3.3/angular.min.js'></script>
+      <script src='libs/ng-maps.js'></script>
+      <script>
+         angular.module('App', ['ngMaps'])
+         
+         .controller('Main', function($http, $scope) {
+         var ref = this;
+          
+         
+             ref.pos = [38.9041,23.3234];
+             ref.information = {};
+             ref.getInfo = function(){
+         $http.get("http://maps.googleapis.com/maps/api/geocode/json?latlng="+ref.pos[0]+","+ref.pos[1]+"&sensor=false").then(function(response) {
+           		ref.information = response.data;
+         	});
+         };
+             
+           ref.map = {
+             center: ref.pos,
+         options: function() {
+           return {
+             streetViewControl: false,
+             //scrollwheel: false
+           }
+         },
+         events: {
+         click: function(e, map) {
+           ref.pos = [e.latLng.lat(), e.latLng.lng()];
+           ref.marker.position = ref.pos;
+           ref.getInfo();
+         }
+         }
+           }
+         
+           ref.marker = {
+             position: ref.pos,
+             options: function(){
+               return {
+                 draggable: true
+               }
+             }
+           }
+         
+         var init = function () {
+         ref.getInfo();
+         };
+         // and fire it after definition
+         init();
+         
+         
+         });
+      </script>
+   </head>
+   <body >
+      <div ng-controller="Main as obj" style="height:50%;" ng-init="init()">
+         <a data-ng-click=''>
+            <map ng-transclude class="google-map" center="obj.map.center" options="obj.map.options" events="obj.map.events">
+               <marker position='obj.marker.position'></marker>
+            </map>
+         </a>
+         {{obj.pos}}
+         <ul>
+            <li data-ng-repeat="tt in obj.information.results[0].address_components">
+               {{ tt.long_name }}
+            </li>
+         </ul>
+      </div>
+   </body>
+</html>
